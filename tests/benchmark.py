@@ -15,10 +15,13 @@ from transducers import transducers as T
 from tests import genducers as G
 from tests.transducer_tests import append
 import time
+import csv
+import sys
+import os.path
 
 scale = 10
 
-range = T.compose(list, range)  # Comptatible version for both python 2 and python 3 version
+range = T.compose(list, range)  # Compatible version for both python 2 and python 3 version
 
 
 def run_tests(X):
@@ -60,6 +63,7 @@ def benchmark_one(X, xduc, input=None, runs=100):
     avg = sum([test() for x in range(runs)]) / runs
     print("Avg. time for " + X.__name__ + " with " + xduc + \
           " is: " + str(avg))
+    return X.__name__, xduc, avg
 
 if __name__ == "__main__":
     # Define some transducer scenarios. Could comp these through permutations,
@@ -83,9 +87,10 @@ if __name__ == "__main__":
                "random_sample(0.4)": None}
 
     # Run benchmarks for whole set of transducers per tranducer
+    rows = []
     for xduc, input in xducers.items():
-        benchmark_one(T, "T."+xduc, input)
-        benchmark_one(G, "G."+xduc, input)
+        rows.append(benchmark_one(T, "T."+xduc, input))
+        rows.append(benchmark_one(G, "G."+xduc, input))
 
     # Keep test for big compose for now...
     runs = 100
@@ -96,3 +101,18 @@ if __name__ == "__main__":
 
     print("Average for large compose for Generators: " + str(G_mean) + " ms.")
     print("Average for large compose for Transducers: " + str(T_mean) + " ms.")
+
+    rows.append((T.__name__, 'large compose', T_mean))
+    rows.append((G.__name__, 'large compose', G_mean))
+
+    if len(sys.argv) > 1:
+      path = sys.argv[1]
+      name = ''
+      if len(sys.argv) > 2:
+          name = sys.argv[2]
+
+      fieldnames = 'module', 'scenario', name
+      with open(path, 'wt') as stream:
+          writer = csv.writer(stream)
+          writer.writerow(fieldnames)
+          writer.writerows(rows)
