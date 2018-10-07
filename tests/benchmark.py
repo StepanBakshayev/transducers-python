@@ -18,6 +18,9 @@ import time
 
 scale = 10
 
+range = T.compose(list, range)  # Comptatible version for both python 2 and python 3 version
+
+
 def run_tests(X):
     t = time.time()
     xducer = (X.compose(
